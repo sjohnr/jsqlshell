@@ -18,6 +18,7 @@ public class DataFormatter {
     private List<List<String>> results;
     private List<String> columnNames;
     private List<Integer> columnLengths;
+    private List<String> selectClause = Collections.emptyList();
     private Set<String> showColumns = Collections.emptySet();
     private boolean unique;
 
@@ -32,6 +33,9 @@ public class DataFormatter {
     public DataFormatter format() throws Exception {
         for (int i = 0; i < metaData.getColumnCount(); i++) {
             String colName = metaData.getColumnName(i+1);
+            if (colName.isEmpty() && selectClause.size() > i) {
+                colName = selectClause.get(i);
+            }
             columnNames.add(colName);
             columnLengths.add(colName.length());
         }
@@ -59,47 +63,57 @@ public class DataFormatter {
         return this;
     }
     
-    public DataFormatter printResults(PrintStream out, long started) throws Exception {
-        out.println();
-        printBoundary(out);
-        
-        int numOfCols = columnLengths.size();
-        int col = 0;
-        while (col < numOfCols) {
-            String name = columnNames.get(col);
-            if (showColumns.isEmpty() || showColumns.contains(name)) {
-                out.print("| ");
-                out.print(padRight(name, columnLengths.get(col)));
-                out.print(" ");
-            }
-            col++;
+    public DataFormatter columns(String[] columns) {
+        List<String> list = new ArrayList<String>(columns.length);
+        for (String column : columns) {
+            list.add(column.trim());
         }
-        out.println("|");
-        
-        printBoundary(out);
-        
+        selectClause = list;
+        return this;
+    }
+    
+    public DataFormatter printResults(PrintStream out, long started) throws Exception {
         Set<String> uniqueSet = new HashSet<String>(); 
-        outer: for (List<String> rowData : results) {
-            col = 0;
-            for (String value : rowData) {
+        out.println();
+        if (results.size() > 0) {
+            printBoundary(out);
+            
+            int numOfCols = columnLengths.size();
+            int col = 0;
+            while (col < numOfCols) {
                 String name = columnNames.get(col);
                 if (showColumns.isEmpty() || showColumns.contains(name)) {
-                    if (unique && !uniqueSet.add(value)) {
-                        continue outer;
-                    }
                     out.print("| ");
-                    out.print(padRight(value, columnLengths.get(col)));
+                    out.print(padRight(name, columnLengths.get(col)));
                     out.print(" ");
-                    if (unique) {
-                        break;
-                    }
                 }
                 col++;
             }
             out.println("|");
+            printBoundary(out);
+            
+            outer: for (List<String> rowData : results) {
+                col = 0;
+                for (String value : rowData) {
+                    String name = columnNames.get(col);
+                    if (showColumns.isEmpty() || showColumns.contains(name)) {
+                        if (unique && !uniqueSet.add(value)) {
+                            continue outer;
+                        }
+                        out.print("| ");
+                        out.print(padRight(value, columnLengths.get(col)));
+                        out.print(" ");
+                        if (unique) {
+                            break;
+                        }
+                    }
+                    col++;
+                }
+                out.println("|");
+            }
+            
+            printBoundary(out);
         }
-        
-        printBoundary(out);
         
         long time = System.currentTimeMillis() - started;
         int size = unique ? uniqueSet.size() : results.size();
