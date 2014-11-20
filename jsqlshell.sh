@@ -1,8 +1,11 @@
 #/bin/sh
 
-cp="."
-for jar in `ls *.jar`; do
+script="$(readlink -n $0)"
+dir="$(dirname $script)"
+
+cp="$dir/target/*"
+for jar in `ls $dir/*.jar`; do
   cp=$cp:$jar
 done
 
-java  -cp "$cp" JSQLShell $1
+java -cp "$cp" JSQLShell $1
