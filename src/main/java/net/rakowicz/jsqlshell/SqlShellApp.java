@@ -28,7 +28,7 @@ public class SqlShellApp {
             out.print("Connected to: " + dbmd.getDatabaseProductName() + " " + dbmd.getDatabaseProductVersion());
 
             statement = connection.createStatement();
-            statement.setMaxRows(1000);
+            statement.setMaxRows(dbConfig.getProperty(DbConfig.DB_MAX_ROWS, 1000));
             out.println(" (autocommit=" + connection.getAutoCommit() + ", readonly=" + connection.isReadOnly() + ", maxrows=" + statement.getMaxRows() + ")");
             out.println("Type 'help' for more options");
 
