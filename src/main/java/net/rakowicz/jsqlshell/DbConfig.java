@@ -17,6 +17,7 @@ public class DbConfig {
     private static final String DB_PASS = "dbPass";
     private static final String DB_AUTO_COMMIT = "dbAutoCommit";
     private static final String DB_READ_ONLY = "dbReadOnly";
+    public static final String DB_MAX_ROWS = "dbMaxRows";
     
     private Properties dbProperties;
     private String dbPrefix;
@@ -70,13 +71,38 @@ public class DbConfig {
                 getProperty(DB_URL),
                 getProperty(DB_USER),
                 getProperty(DB_USER));
-        connection.setAutoCommit("true".equalsIgnoreCase(getProperty(DB_AUTO_COMMIT)));
-        connection.setReadOnly("true".equalsIgnoreCase(getProperty(DB_READ_ONLY)));
+        connection.setAutoCommit(getProperty(DB_AUTO_COMMIT, true));
+        connection.setReadOnly(getProperty(DB_READ_ONLY, false));
         return connection;
     }
     
     private String getProperty(String key) {
         return dbProperties.getProperty(dbPrefix + key);
+    }
+    
+    public String getProperty(String key, String defaultValue) {
+        String result = getProperty(key);
+        if (isEmpty(result)) {
+            result = defaultValue;
+        }
+        return result;
+    }
+    
+    public boolean getProperty(String key, boolean defaultValue) {
+        boolean result = defaultValue;
+        if ("true".equalsIgnoreCase(getProperty(key))) {
+            result = true;
+        }
+        return result;
+    }
+    
+    public int getProperty(String key, int defaultValue) {
+        int result = defaultValue;
+        try {
+            result = Integer.parseInt(getProperty(key));
+        } catch (NumberFormatException ignored) {
+        }
+        return result;
     }
     
     private boolean isEmpty(String value) {
